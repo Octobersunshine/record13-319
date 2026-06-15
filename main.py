@@ -1,7 +1,8 @@
+import time
 from env_service import EnvService
 
 
-def main() -> None:
+def example_basic() -> None:
     env = EnvService()
 
     print("=" * 50)
@@ -43,10 +44,45 @@ def main() -> None:
     test_list = env.get_list("TEST_LIST", default=["a", "b", "c"])
     print(f"   TEST_LIST (默认值) = {test_list}")
 
+
+def example_hot_reload() -> None:
+    print("\n" + "=" * 50)
+    print("热加载功能使用示例")
+    print("=" * 50)
+
+    env = EnvService()
+
+    def on_config_change(new_vars):
+        print(f"\n   🔔 配置已更新! APP_NAME = {new_vars.get('APP_NAME', 'N/A')}")
+
+    print("\n8. 启动文件监控 (热加载):")
+    env.start_watch(callback=on_config_change, debounce=0.5)
+    print(f"   监控状态: {env.is_watching()}")
+
+    print("\n   💡 提示: 修改项目根目录下的 .env 文件，")
+    print("          系统会自动检测到变更并刷新配置。")
+
+    print("\n9. 注册/注销变更监听器:")
+    def another_callback(vars):
+        pass
+    env.on_change(another_callback)
+    print("   已注册 another_callback")
+    env.off_change(another_callback)
+    print("   已注销 another_callback")
+
+    print("\n10. 手动刷新 (reload):")
+    env.reload()
+    print("    已执行手动 reload()")
+
+    print("\n11. 停止监控:")
+    env.stop_watch()
+    print(f"    监控状态: {env.is_watching()}")
+
     print("\n" + "=" * 50)
     print("示例运行完毕!")
     print("=" * 50)
 
 
 if __name__ == "__main__":
-    main()
+    example_basic()
+    example_hot_reload()
