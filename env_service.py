@@ -18,13 +18,38 @@ class EnvService:
         self._load_env(env_file, override)
         self._initialized = True
 
+    def _parse_env_file(self, file_path: str) -> Dict[str, str]:
+        env_vars: Dict[str, str] = {}
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line_num, line in enumerate(f, 1):
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                elif value.startswith("'") and value.endswith("'"):
+                    value = value[1:-1]
+                if "#" in value:
+                    value = value.split("#", 1)[0].strip()
+                env_vars[key] = value
+        return env_vars
+
     def _load_env(self, env_file: Optional[str], override: bool) -> None:
         if env_file:
-            load_dotenv(dotenv_path=env_file, override=override)
+            file_path = env_file
         else:
-            dotenv_path = find_dotenv(usecwd=True)
-            if dotenv_path:
-                load_dotenv(dotenv_path=dotenv_path, override=override)
+            file_path = find_dotenv(usecwd=True)
+
+        if file_path:
+            parsed_vars = self._parse_env_file(file_path)
+            for key, value in parsed_vars.items():
+                if override or key not in os.environ:
+                    os.environ[key] = value
 
     def reload(self, env_file: Optional[str] = None, override: bool = True) -> None:
         self._initialized = False
